@@ -7,7 +7,7 @@
 #Intro to RStudio Environment
 
 #Setting a Working Directory/Creating Projects
-setwd("C:/Users/dnm5ca/Desktop/bootcamp")
+setwd("https://github.com/dnm5ca/Bootcamp")
 
 #(Soft-wrapping, etc.)
 
@@ -194,19 +194,34 @@ setwd("C:/Users/dnm5ca/Desktop/bootcamp")
     #2. Create an indicator variable, nhanes_InsuredHomeOwn, that is equal to 1 if the patient is Insured and Owns a Home and 0 otherwise (See the Insured and HomeOwn variables). How many patients fall into this nhanes_InsuredHomeOwn category? 
     nhanes_InsuredHomeOwn <- ifelse(nhanes$Insured == "Yes" & nhanes$HomeOwn == "Own", 1, 0)
       sum(nhanes_InsuredHomeOwn == 1, na.rm = TRUE)
+
+#---------------------------------------------------------------#
       
-  
-#DPLYR Stuff
-  # filter - Selects the rows you want to look at.
-    filter(nhanes, BPDia >= 100)    
-    filter(nhanes, Gender == "male" & BPDia >= 100)
+# The Pipe Operator - Allows for the chaining of commands in R
+    #Explain and use the pipe operator (Pipe == Then)
+      nhanes$Weight %>% 
+        mean(na.rm = TRUE)
+      
+      nhanes_Height <- nhanes$Height %>%
+        sd(na.rm = TRUE)
+      nhanes_Height
+      
+      nhanes %>% 
+        nrow() 
     
-  # The Pipe Operator - Allows for the chaining of commands in R
-    #Explain and use
-    nhanes %>% filter(BPDia >=  100)
+#DPLYR Stuff
+  #The DPLYR Package offers a series of built-in functions allowing the user to use easy to understand function names to manipulate their data.
+  
+  # filter - Selects the rows you want to look at based off of certain criteria.
+    filter(nhanes, BPDia >= 85)
+    filter(nhanes, Gender == "male" & BPDia >= 85)
+    
+  # Using the pipe with filter
+    nhanes %>% 
+      filter(BPDia >=  85)
     
     nhanes_HighBP_male <- nhanes %>% 
-      filter(BPDia >= 100) %>% 
+      filter(BPDia >= 85) %>% 
       filter(Gender == "male")
     
     View(nhanes_HighBP_male)
@@ -217,19 +232,32 @@ setwd("C:/Users/dnm5ca/Desktop/bootcamp")
     new_df <- nhanes %>%
         select(BPDia, BPSys)
     
+    new_df
+    
     new_df2 <- nhanes %>%
       select(-id)
+    new_df2
     
     select(nhanes, -c(3:35))
     select(nhanes, c(1:3, 15:17))
     
+    # Combining Filter and Select
+    nhanes %>% 
+      filter(SmokingStatus == "Current") %>% 
+      select(id, Age, SmokingStatus) %>%
+      View()
+        
+      
   # mutate - changes or creates a new variable/column
     mutate(nhanes, Testosterone_Squared = Testosterone * Testosterone)
     
+    # mutate using a function
     mutate(nhanes, Testosterone_mean = mean(Testosterone, na.rm = TRUE))
     
+    # mutate using a conditional
     nhanes <- mutate(nhanes, High_BPDia = ifelse(BPDia > 60, "High", "Low"))
     
+    # mutate with the pipe
     nhanes_new <- nhanes   %>%  
       mutate(High_BPDia = ifelse(BPDia > 60, "High", "Low"))
       
@@ -302,19 +330,22 @@ setwd("C:/Users/dnm5ca/Desktop/bootcamp")
       str_detect("Is this a question", "[\\?]")
       
   #Detect whether someone received less than high school (8th -> 9th-11th)  
-      str_detect(Education, "th")
-      
-      nhanes_NoHS <- summarize(group_by(Gender)(filter(mutate())))
+      str_detect(nhanes$Education, "th")
+    
       nhanes_NoHS <- nhanes %>%
         mutate(HS_Category = ifelse(str_detect(Education, "th"), "Less than HS", "HS or More")) %>% 
         filter(HS_Category == "Less than HS" & !is.na(TotChol)) %>% 
         group_by(Gender) %>% 
         summarize(meanexp=mean(TotChol))
       
+      nhanes_NoHS
+      
     #str_which - Find the indexes of strings that contain a pattern match.
       str_which(nhanes$Education, "th")
+    
     #str_count - Count the number of matches in a string.
       str_count(nhanes$Education, "h")
+      
     #str_locate - Shows the location of the pattern matches in a string
       str_locate(nhanes$Education, "th")
       str_locate_all(nhanes$Education, "h")
