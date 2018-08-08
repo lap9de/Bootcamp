@@ -67,6 +67,7 @@ setwd("https://github.com/dnm5ca/Bootcamp")
     
     # 3.	Calculate a new object 'bmi' where BMI = weight_kg / (height_m*height_m)
     
+    #----------------------------------------------------------#
     
 #DATAFRAMES
 #Talk about dataframes. 
@@ -170,6 +171,8 @@ setwd("https://github.com/dnm5ca/Bootcamp")
     n_distinct(nhanes$Gender)
     n_distinct(nhanes$Education)
     
+    #----------------------------------------------------------#
+    
 #Conditionals
     # - `==`: Equal to, `!=`: Not equal to
     # - `>`, `>=`: Greater than, greater than or equal to
@@ -209,7 +212,7 @@ setwd("https://github.com/dnm5ca/Bootcamp")
       nhanes %>% 
         nrow() 
     
-#DPLYR Stuff
+#DPLYR
   #The DPLYR Package offers a series of built-in functions allowing the user to use easy to understand function names to manipulate their data.
   
   # filter - Selects the rows you want to look at based off of certain criteria.
@@ -247,7 +250,18 @@ setwd("https://github.com/dnm5ca/Bootcamp")
       select(id, Age, SmokingStatus) %>%
       View()
         
+#### DPLYR EXERCISE 1 #####
+    # 1. Using filter and select, display the Age, Gender, MaritalStatus, Work, HDLChol, and TotChol data where the patient is "NotWorking" and has never been married. (Answer should return a 224-by-6 tibble/dataframe).
+      nhanes %>%
+        filter(MaritalStatus == "NeverMarried" & Work == "NotWorking") %>%
+        select(Age, Gender, MaritalStatus, Work, HDLChol, TotChol)  
       
+    # 2. Display the patient data where the Pulse is really high (in the top 1% of all patients). _Hint:_ see `?quantile` and try `quantile(nhanes$Pulse, probs=.99, na.rm = TRUE) to see the pulse value which is higher than 99% of all the data, then `filter()` based on that. Use Select to look at the Age, Gender, and BMI for these patients. Answer should return a 56-by-3 tibble/data frame.
+    nhanes %>%
+      filter(Pulse >= quantile(Pulse, probs=.99, na.rm = TRUE)) %>%
+      select(Age, Gender, BMI)
+    #----------------------------------------------------------#
+    
   # mutate - changes or creates a new variable/column
     mutate(nhanes, Testosterone_Squared = Testosterone * Testosterone)
     
@@ -255,11 +269,12 @@ setwd("https://github.com/dnm5ca/Bootcamp")
     mutate(nhanes, Testosterone_mean = mean(Testosterone, na.rm = TRUE))
     
     # mutate using a conditional
-    nhanes <- mutate(nhanes, High_BPDia = ifelse(BPDia > 60, "High", "Low"))
+    nhanes <- mutate(nhanes, High_BPDia = ifelse(BPDia > 85, "High", "Low"))
+    View(nhanes)
     
     # mutate with the pipe
     nhanes_new <- nhanes   %>%  
-      mutate(High_BPDia = ifelse(BPDia > 60, "High", "Low"))
+      mutate(High_BPDia = ifelse(BPDia > 85, "High", "Low"))
       
     nhanes_new <- nhanes  %>% 
       mutate_if(is.numeric, replace_na, 0)
@@ -272,6 +287,25 @@ setwd("https://github.com/dnm5ca/Bootcamp")
                       ifelse(BMI >= 15 & BMI < 25, "Low",
                       ifelse(BMI >= 25 & BMI < 35, "Average",
                       ifelse(BMI >= 35, "High", "")))))
+    
+
+    #### DPLYR EXERCISE 2 #####
+    
+    # 1. Using Mutate, create an indicator (LowSleep) for those patients that get 6 or less hours of sleep a night (SleepHrsNight).
+    nhanes <- nhanes %>%
+        mutate(LowSleep = ifelse(SleepHrsNight <= 6, 1, 0))
+    # 2. Filter using the LowSleep indicator and Select the Age, SleepHrsNight, BPSys, and BPDia variables
+    nhanes %>% 
+      filter(LowSleep == 1) %>%
+      select(Age, SleepHrsNight, BPSys, BPDia)
+    
+    # 3. Using mutate, create a "Low", "Medium", and "High" indicator (HDLChol_cat) for the TotChol variable ranging from 0 to 3, 3 to 5.5, and 5.5 and above. Use select and View() to show Age, Gender, TotChol and TotChol_cat.
+    nhanes %>%
+      mutate(TotChol_cat = ifelse(TotChol >= 0 & TotChol < 3, "Low",
+                                   ifelse(TotChol >= 3 & TotChol < 5.5, "Medium", "High"))) %>%
+      select(Age, Gender, TotChol, TotChol_cat) %>% View()
+    
+  #----------------------------------------------------------#
     
   # summarize - Applies a function to a group  
   # group_by - Tells a function which group(s) to act upon
@@ -309,21 +343,28 @@ setwd("https://github.com/dnm5ca/Bootcamp")
       group_by(Insured) %>% 
       summarize(meanexp=mean(Pulse, na.rm = TRUE))
     
-#String Stuff (USE SOME PIPE OPERATORS/DPLYR COMBO STUFF)
+    #### DPLYR EXERCISE 3 #####
+    
+    #1. When the poverty level is less than 2, what is the average weight across all patients that are Single, separately for each Smoking Status? _Hint:_ 3 pipes: `filter`, `group_by, `summarize.
+    nhanes %>% 
+      filter(Poverty < 2 & RelationshipStatus == "Single") %>%
+      group_by(SmokingStatus) %>%
+      summarize(mean(Weight, na.rm = TRUE))
+    #----------------------------------------------------------#
+
+#Manipulating Strings
   #Paste/Paste0 Redux
     paste("We need", "a little space")
     paste0("I'd rather stick", "close by!")
     paste(nhanes$Education, nhanes$Race)
     
-  #(grep, gsub)
-  # Regular Expressions - Quick Look
   #Detect Matches
     #str_detect - detects the presence of a pattern match in a string
       str_detect("This is something", "is")
       str_detect("This is not something", "Am I Here?")
       
-    # Use of Regular Expressions
-        # Overview of Regular Expressions
+    #Use of Regular Expressions
+      # Overview of Regular Expressions
       str_detect("Is there a number here?", "[:digit:]")
       str_detect("Well are there 3 numbers here?", "[:digit:]")
       str_detect("Is this a question?", "[\\?]")
@@ -333,13 +374,25 @@ setwd("https://github.com/dnm5ca/Bootcamp")
       str_detect(nhanes$Education, "th")
     
       nhanes_NoHS <- nhanes %>%
+        mutate(HS_Category = ifelse(str_detect(Education, "th"), "Less than HS", "HS or More"))
+      
+      nhanes_NoHS <- nhanes %>%
+        mutate(HS_Category = ifelse(str_detect(Education, "th"), "Less than HS", "HS or More")) %>% 
+        filter(HS_Category == "Less than HS" & !is.na(TotChol))
+      
+      nhanes_NoHS <- nhanes %>%
+        mutate(HS_Category = ifelse(str_detect(Education, "th"), "Less than HS", "HS or More")) %>% 
+        filter(HS_Category == "Less than HS" & !is.na(TotChol)) %>% 
+        group_by(Gender)
+      
+      nhanes_NoHS <- nhanes %>%
         mutate(HS_Category = ifelse(str_detect(Education, "th"), "Less than HS", "HS or More")) %>% 
         filter(HS_Category == "Less than HS" & !is.na(TotChol)) %>% 
         group_by(Gender) %>% 
         summarize(meanexp=mean(TotChol))
       
       nhanes_NoHS
-      
+    
     #str_which - Find the indexes of strings that contain a pattern match.
       str_which(nhanes$Education, "th")
     
@@ -348,16 +401,45 @@ setwd("https://github.com/dnm5ca/Bootcamp")
       
     #str_locate - Shows the location of the pattern matches in a string
       str_locate(nhanes$Education, "th")
-      str_locate_all(nhanes$Education, "h")
+      str_locate_all(nhanes$Education, "h")/
       
   #Subset strings
     #str_sub - Extract substrings from a character vector.
       str_sub("Here is a substring, let us look at it.", 11, 19)
       str_sub(nhanes$Education, 3, 5)
-    #str_subset
+      
+      # You can also assign character vectors to a substring
+      str_sub(nhanes$Gender, 7, 8) <- "" 
+      n_distinct(nhanes$Gender)
+      
+    #str_subset - Return only the strings that contain a pattern match.
       str_subset("Here is a substring, let us look at it", "substring")
       str_subset(nhanes$Race, "ite")
-
+  
+      #### String Exercise 1 #####
+      #1. Create the string vector "This is a test string for us to look at in this exercise, tell me what you can find."  
+         # Using str_detect, check whether the following strings or patterns are found.
+         #  a. "ell"
+         #  b. "Exe"
+         #  c. "!"
+         #  d. "[:digit:]"
+      
+      str_detect("This is a test string for us to look at in this exercise, tell me what you can find.", "ell")
+      str_detect("This is a test string for us to look at in this exercise, tell me what you can find.", "Exe")
+      str_detect("This is a test string for us to look at in this exercise, tell me what you can find.", "!")
+      str_detect("This is a test string for us to look at in this exercise, tell me what you can find.", "[:digit:]")
+      #2. Create a substring within the nhanes dataset for RelationshipStatus that starts at the first character and is 4 characters long.
+        
+      str_sub(nhanes$RelationshipStatus, 1, 4)
+        
+      #3. Filter the nhanes dataset by patients that have an "a" or "A" in the Race variable. Select the Age and Race columns.
+      
+      nhanes %>% 
+        filter(str_detect(Race, "A") | str_detect(Race, "a")) %>%
+        select(Age, Race)
+        
+      #--------------------------#
+      
   #Manage Lengths
     #str_length - Find the length of a string
       str_length("How long is this string")
@@ -372,31 +454,53 @@ setwd("https://github.com/dnm5ca/Bootcamp")
       str_squish("   Address: 2312 Main Street,    City: Charlottesville,   State:  Virginia  ")
       
    #Mutate Strings
-    #str_replace()
+    #str_replace() - Replace the first matched pattern in each string.
       str_replace("First time is is here replace is with is replacer", "is", "REPLACE")
       
-      #LOOK AT str_replace() for Gender
-        
-    #str_replace_all()
+      n_distinct(nhanes$Gender)
+      
+      nhanes$Gender <- nhanes$Gender %>% 
+        str_replace("r", "")
+      
+      n_distinct(nhanes$Gender)
+      
+    #str_replace_all() - Replace all matched patterns in each string.
       str_replace_all("First time is is here replace is with is replacer", "is", "REPLACE")
-  
-      str_replace_all(nhanes$Education, "th", "")
       
-      str_replace_all(nhanes$Education, c("th" = "", "Grad" = "", " e" = ""))
+      n_distinct(nhanes$Gender)
       
+      nhanes$Gender <- nhanes$Gender %>% 
+                        str_replace_all("u", "")
       
-    #str_to_lower()
+      n_distinct(nhanes$Gender)
+      n_distinct(nhanes$Education)
+      
+      nhanes$Education <- nhanes$Education %>% 
+          str_replace_all(c("th" = "", "Grad" = "", "grad" = "", " e" = "", "Only" = "", "uate" = "")) %>% 
+      str_trim() %>%
+        str_squish
+      
+      head(nhanes$Education, 20)
+      n_distinct(nhanes$Education)
+    
+    #str_to_lower() - set all characters in string to lowercase
       str_to_lower("STOP SHOUTING AT ME NOW")
-      str_to_lower(nhanes$Gender)
-  
-    #str_to_upper()
+      nhanes$Gender <- str_to_lower(nhanes$Gender)
+      n_distinct(nhanes$Gender)
+      head(nhanes$Gender, 50)
+      
+    #str_to_upper() - set all characters in string to uppercase
       str_to_upper("please speak up")
       str_to_upper(nhanes$Education)
       
-    #str_to_title()
+    #str_to_title() - - set the first character in string to uppercase
       str_to_title("an introduction to r by: DAVID MARTIN")
+      nhanes$Education <- str_to_title(nhanes$Education)
+      n_distinct(nhanes$Education)
+      head(nhanes$Education, 40)
+      
+      #Compare the 3 modifiers
       str_vec <- "How does THIS look?"
-      c(paste("to lower", str_to_lower(str_vec)), str_to_upper(str_vec), str_to_title(str_vec))
       
       str_vec %>% 
           str_to_lower()
@@ -406,73 +510,42 @@ setwd("https://github.com/dnm5ca/Bootcamp")
       
       str_vec %>% 
         str_to_title()
-      
-      
-      #Finding and replacing within a substring
-      "First time is is" %>% 
-        str_sub(15, 18) %>%
-        str_replace("is", "try_this")
-      
-      
+ 
+      #--------------------------#
 #Merging/Appending/Reshaping Data
     # rbind, cbind
     new_var <- 1
-    View(new_var)
+    # Bind Columns
     cbind(new_var, 1:7)
     
+    # Bind Rows
     rbind(new_var, 1:7)
     cbind(new_var, rbind(new_var, 1:7))
     
-    # Full_join, etc.
-    # Gather/Spread
-    View(nhanes)
-    nhanes <- select(nhanes, -PhysActive)
-    #nhanes <- select(nhanes, -PhysActiveDays)"
+    id       <- c(1, 2, 3, 4)
+    mean_var <- c(3, 6, 9, 12)
+    df1 <- data.frame(id, mean_var)
+    sd_var   <- c(.7, 1.6, .3, 2.1)
+    cbind(df1, sd_var)
     
-    final_nhanes <- spread(nhanes, visit_num, visit_num, sep = "_")
-    final_nhanes <- final_nhanes[, -grep("visit_num", colnames(final_nhanes))]
+    #Full Join
+    df2 <- data.frame(id, sd_var)
+    full_join(df1, df2, by = "id")
+    
+    df3 <- data.frame(c("male", "female"), c(500, 250))
+      colnames(df3) <- c("Gender", "Extra_variable")
+    
+    nhanes <- inner_join(nhanes, df3, by = "Gender")
+    
+    # Gather/Spread
+    nhanes <- select(nhanes, -PhysActiveDays)
+    final_nhanes <- select(nhanes, c(1:35))
+    nrow(final_nhanes)
+    final_nhanes <- spread(final_nhanes, visit_num, PhysActive, sep = "_")
+    
     View(final_nhanes)
-
+    nrow(final_nhanes)
+    
     #Save Final CSV.
     write.csv(final_nhanes, "nhanes_final.csv")
     
-  
-#### DPLYR EXERCISE 1 #####
-    # 1. Display the data where the biological process the gene plays a role in (the `bp` variable) is "leucine biosynthesis" (case-sensitive) _and_ the limiting nutrient is Leucine. (Answer should return a 24-by-7 data frame -- 4 genes X 6 growth rates).
-    
-    
-    # 2. Display the data where the gene/rate combinations had high expression (in the top 1% of expressed genes). _Hint:_ see `?quantile` and try `quantile(ydat$expression, probs=.99)` to see the expression value which is higher than 99% of all the data, then `filter()` based on that. Try wrapping your answer with a `View()` function so you can see the whole thing. What does it look like those genes are doing? Answer should return a 1971-by-7 data frame.
-    
-  
-# DPLYR EXERCISE 2
-    
-    # 1. First, re-run the command you used above to filter the data for genes involved in the "leucine biosynthesis" biological process and where the limiting nutrient is Leucine. 
-    filter(ydat, bp = "leucine biosynthesis"  & nutrient=="Leucine")
-    
-    # 2. Wrap this entire filtered result with a call to `arrange()` where you'll arrange the result of #1 by the gene symbol.
-    arrange(filter(ydat, bp=="leucine biosynthesis" & nutrient=="Leucine"), symbol)
-    
-    # 3. Wrap this entire result in a `View()` statement so you can see the entire result.
-    View(arrange(filter(ydat, bp=="leucine biosynthesis" & nutrient=="Leucine"), symbol))
-    
-
-    
-# DPLYR EXERCISE 3
-    
-    #Show the limiting nutrient and expression values for the gene ADH2 when the growth rate is restricted to 0.05. _Hint:_ 2 pipes: `filter` and `select`.
-    ydat %>% filter(symbol=="ADH2" & rate==0.05) %>% select(nutrient, expression)
-    
-    
-    #2. What are the four most highly expressed genes when the growth rate is restricted to 0.05 by restricting glucose? Show only the symbol, expression value, and GO terms (bp and mf). _Hint:_ 4 pipes: `filter`, `arrange`, `head`, and `select`.
-    ydat %>% 
-      filter(nutrient=="Glucose" & rate==.05) %>% 
-      arrange(desc(expression)) %>% 
-      head(4) %>% 
-      select(symbol, expression, bp, mf) 
-    
-    #3. When the growth rate is restricted to 0.05, what is the average expression level across all genes in the "response to stress" biological process, separately for each limiting nutrient? What about genes in the "protein biosynthesis" biological process? _Hint:_ 3 pipes: `filter`, `group_by`, `summarize`.
-    
-    ##STRINGR EXERCISE
-    #SOMETHING HERE!!!
-    
-    #EXTRA EXERCISES
